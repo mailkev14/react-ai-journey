@@ -1,7 +1,9 @@
 # Week 1 — React Without AI
 
 ## Day 1
-- Status: ⬜ Not Started
+- Status: ✅ Done
+- Built: Basic todo (add/delete)
+- Notes: Slight reliance on autocomplete; need stricter no-AI discipline
 
 ## Day 2
 - Status: ⬜ Not Started
