@@ -13,7 +13,7 @@ Regain strong confidence in React and evolve into a developer who can work effec
 ## 📊 Progress
 
 ### Week 1 — React without AI
-- Day 1: ⬜
+- Day 1: ✅
 - Day 2: ⬜
 - Day 3: ⬜
 - Day 4: ⬜
@@ -40,9 +40,7 @@ Regain strong confidence in React and evolve into a developer who can work effec
 
 ## 📒 Notion Tracker (Coming Soon)
 
-Detailed daily reflections and structured tracking will be maintained in Notion.
-
-(Link will be added here)
+Detailed daily reflections and structured tracking will be maintained in [Notion](https://www.notion.so/35897bdb4538806c9ff7d6b65ab780c4).
 
 ---
 
