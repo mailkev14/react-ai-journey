@@ -6,7 +6,9 @@
 - Notes: Slight reliance on autocomplete; need stricter no-AI discipline
 
 ## Day 2
-- Status: ⬜ Not Started
+- Status: ✅ Done
+- Built: Toggle task completion
+- Notes: This was already handled on day one. 
 
 ## Day 3
 - Status: ⬜ Not Started

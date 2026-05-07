@@ -14,7 +14,7 @@ Regain strong confidence in React and evolve into a developer who can work effec
 
 ### Week 1 — React without AI
 - Day 1: ✅
-- Day 2: ⬜
+- Day 2: ✅
 - Day 3: ⬜
 - Day 4: ⬜
 - Day 5: ⬜
