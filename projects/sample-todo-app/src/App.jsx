@@ -28,7 +28,7 @@ function App() {
   const handleOnUpdate = useCallback((text) => {
     if (editIndex < 0) return false;
 
-    setItems(prev => items.map((item, i) => i === editIndex ? {...item, text} : item ))
+    setItems(prev => prev.map((item, i) => i === editIndex ? {...item, text} : item ))
 
     setEditIndex(-1);
   }, []);
@@ -82,18 +82,14 @@ const TodoList = ({
   onCancel,
   onUpdateFilter
 }) => {
-  const filterRef = useRef(null)
-
-  const handleOnChangeFilter = useCallback((e) => onUpdateFilter(filterRef.current?.value ?? ''), [onUpdateFilter])
   
   return (
     <div style={{ marginBottom: '1rem' }}>
       <div style={{ display: 'flex', gap: '0.5rem' }}>
-        <label forName="filter">Filter By</label>
+        <label htmlFor="filter">Filter By</label>
         <select
           id="filter"
-          ref={filterRef}
-          onChange={handleOnChangeFilter}
+          onChange={(e) => onUpdateFilter(e.target?.value)}
         >
           <option value="">All</option>
           <option value="pending">Pending</option>
