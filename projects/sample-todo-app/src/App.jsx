@@ -1,8 +1,10 @@
-import { useCallback, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+
+const TODO_ITEMS_KEY = 'todo-items'
 
 function App() {
   const inputRef = useRef(null);
-  const [items, setItems] = useState([])
+  const [items, setItems] = useState(null)
   const [editIndex, setEditIndex] = useState(-1);
   const [filter, setFilter] = useState('');
 
@@ -31,7 +33,7 @@ function App() {
     setItems(prev => prev.map((item, i) => i === editIndex ? {...item, text} : item ))
 
     setEditIndex(-1);
-  }, []);
+  }, [editIndex]);
 
   const handleOnCancel = useCallback(() => setEditIndex(-1), [])
 
@@ -41,7 +43,7 @@ function App() {
     setFilter(filter);
   }, [])
 
-  const filteredItems = useMemo(() => items.filter((item) => {
+  const filteredItems = useMemo(() => (items ?? []).filter((item) => {
     switch (filter) {
       case 'pending':
         return !item.completed;
@@ -51,6 +53,26 @@ function App() {
         return true;
     }
   }), [items, filter]);
+
+  useEffect(() => {
+    if (!items) {
+      setItems(() => {
+        try {
+          const localStorageItems = localStorage.getItem(TODO_ITEMS_KEY);
+
+          if (!localStorageItems) return [];
+
+          return JSON.parse(localStorageItems);
+        } catch {
+          return [];
+        }
+      })
+
+      return;
+    }
+
+    localStorage.setItem(TODO_ITEMS_KEY, JSON.stringify(items));
+  }, [items])
 
   return (
     <section>
@@ -132,7 +154,7 @@ const TodoItem = ({ item, index, toggleComplete, removeItem, editIndex, onEdit, 
     
     editInputRef.current.value = ''
     onUpdate(newText);
-  }, [onUpdate]);
+  }, [onUpdate, item.text]);
 
   const handleOnEdit = useCallback(() => onEdit(index), [onEdit]);
 
