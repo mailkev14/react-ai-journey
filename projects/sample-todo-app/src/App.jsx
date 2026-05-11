@@ -1,9 +1,10 @@
-import { useCallback, useRef, useState } from 'react'
+import { useCallback, useMemo, useRef, useState } from 'react'
 
 function App() {
   const inputRef = useRef(null);
   const [items, setItems] = useState([])
   const [editIndex, setEditIndex] = useState(-1);
+  const [filter, setFilter] = useState('');
 
   const handleOnSubmit = useCallback((event) => { 
     const text = inputRef.current?.value?.trim();
@@ -34,6 +35,23 @@ function App() {
 
   const handleOnCancel = useCallback(() => setEditIndex(-1), [])
 
+  const handleOnUpdateFilter = useCallback((filter) => {
+    if (filter !== 'all' && filter !== '' && filter !== 'pending' && filter !== 'completed') return false;
+
+    setFilter(filter);
+  }, [])
+
+  const filteredItems = useMemo(() => items.filter((item) => {
+    switch (filter) {
+      case 'pending':
+        return !item.completed;
+      case 'completed':
+        return item.completed;
+      default:
+        return true;
+    }
+  }), [items, filter]);
+
   return (
     <section>
       <h1>Todo List</h1>
@@ -43,9 +61,10 @@ function App() {
         onEdit={handleOnEdit}
         onUpdate={handleOnUpdate}
         onCancel={handleOnCancel}
-        items={items}
+        items={filteredItems}
         toggleComplete={toggleComplete}
         removeItem={removeItem}
+        onUpdateFilter={handleOnUpdateFilter}
       />
 
       <TodoForm inputRef={inputRef} onSubmit={handleOnSubmit} />
@@ -53,25 +72,58 @@ function App() {
   )
 }
 
-const TodoList = ({ items, toggleComplete, removeItem, editIndex, onEdit, onUpdate, onCancel }) => items?.length ? (
-  <ul style={{ listStyle: 'none', padding: 0, marginTop: '1rem', maxWidth: '400px' }}>
-    {items.map((item, index) => (
-      <TodoItem
-        key={index}
-        item={item}
-        index={index}
-        toggleComplete={toggleComplete}
-        removeItem={removeItem}
-        editIndex={editIndex}
-        onEdit={onEdit}
-        onUpdate={onUpdate}
-        onCancel={onCancel}
-      />
-    ))}
-  </ul>
-) : (
-  <p style={{ marginTop: '1rem' }}>No items yet. Add a new item!</p>
-)
+const TodoList = ({
+  items,
+  toggleComplete,
+  removeItem,
+  editIndex,
+  onEdit,
+  onUpdate,
+  onCancel,
+  onUpdateFilter
+}) => {
+  const filterRef = useRef(null)
+
+  const handleOnChangeFilter = useCallback((e) => onUpdateFilter(filterRef.current?.value ?? ''), [onUpdateFilter])
+  
+  return (
+    <div style={{ marginBottom: '1rem' }}>
+      <div style={{ display: 'flex', gap: '0.5rem' }}>
+        <label forName="filter">Filter By</label>
+        <select
+          id="filter"
+          ref={filterRef}
+          onChange={handleOnChangeFilter}
+        >
+          <option value="">All</option>
+          <option value="pending">Pending</option>
+          <option value="completed">Completed</option>
+        </select>
+      </div>
+      {
+        items?.length ? (
+          <ul style={{ listStyle: 'none', padding: 0, marginTop: '1rem', maxWidth: '400px' }}>
+            {items.map((item, index) => (
+              <TodoItem
+                key={index}
+                item={item}
+                index={index}
+                toggleComplete={toggleComplete}
+                removeItem={removeItem}
+                editIndex={editIndex}
+                onEdit={onEdit}
+                onUpdate={onUpdate}
+                onCancel={onCancel}
+              />
+            ))}
+          </ul>
+        ) : (
+          <p>There are no items. Please change the filter or add more items</p>
+        )
+      }
+    </div>
+  )
+}
 
 const TodoItem = ({ item, index, toggleComplete, removeItem, editIndex, onEdit, onCancel, onUpdate }) => {
   const editInputRef = useRef(null);
