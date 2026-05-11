@@ -4,7 +4,17 @@ const TODO_ITEMS_KEY = 'todo-items'
 
 function App() {
   const inputRef = useRef(null);
-  const [items, setItems] = useState(null)
+  const [items, setItems] = useState(() => {
+    try {
+      const localStorageItems = localStorage.getItem(TODO_ITEMS_KEY);
+
+      if (!localStorageItems) return [];
+
+      return JSON.parse(localStorageItems);
+    } catch {
+      return [];
+    }
+  })
   const [editIndex, setEditIndex] = useState(-1);
   const [filter, setFilter] = useState('');
 
@@ -43,7 +53,7 @@ function App() {
     setFilter(filter);
   }, [])
 
-  const filteredItems = useMemo(() => (items ?? []).filter((item) => {
+  const filteredItems = useMemo(() => items.filter((item) => {
     switch (filter) {
       case 'pending':
         return !item.completed;
@@ -55,23 +65,9 @@ function App() {
   }), [items, filter]);
 
   useEffect(() => {
-    if (!items) {
-      setItems(() => {
-        try {
-          const localStorageItems = localStorage.getItem(TODO_ITEMS_KEY);
+    const itemsToPersist = JSON.stringify(items);
 
-          if (!localStorageItems) return [];
-
-          return JSON.parse(localStorageItems);
-        } catch {
-          return [];
-        }
-      })
-
-      return;
-    }
-
-    localStorage.setItem(TODO_ITEMS_KEY, JSON.stringify(items));
+    localStorage.setItem(TODO_ITEMS_KEY, itemsToPersist);
   }, [items])
 
   return (
