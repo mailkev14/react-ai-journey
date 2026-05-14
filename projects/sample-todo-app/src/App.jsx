@@ -1,10 +1,32 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react'
 
 const TODO_ITEMS_KEY = 'todo-items'
 
+const ACTION_MAP = {
+  ADD_ITEM: 'ADD_ITEM',
+  REMOVE_ITEM: 'REMOVE_ITEM',
+  TOGGLE_ITEM: 'TOGGLE_ITEM',
+  UPDATE_ITEM: 'UPDATE_ITEM',
+}
+
+function reducerFn (state, action) {
+  switch (action.type) {
+    case ACTION_MAP.ADD_ITEM:
+      return [...state, { id: Date.now().toString(), completed: false, ...action.payload }];
+    case ACTION_MAP.REMOVE_ITEM:
+      return state.filter(prev => prev.id !== action?.payload?.id);
+    case ACTION_MAP.TOGGLE_ITEM:
+      return state.map(prev => prev.id === action?.payload?.id ? { ...prev, completed: !prev.completed } : prev);
+    case ACTION_MAP.UPDATE_ITEM:
+      return state.map(prev => prev.id === action?.payload?.id ? { ...prev, ...action.payload } : prev);
+    default:
+      return state;
+  }
+}
+
 function App() {
   const inputRef = useRef(null);
-  const [items, setItems] = useState(() => {
+  const [items, dispatch] = useReducer(reducerFn, [], () => {
     try {
       const localStorageItems = localStorage.getItem(TODO_ITEMS_KEY);
 
@@ -14,7 +36,8 @@ function App() {
     } catch {
       return [];
     }
-  })
+  });
+  
   const [editItemId, setEditItemId] = useState('');
   const [filter, setFilter] = useState('');
 
@@ -26,24 +49,24 @@ function App() {
 
     if (items.some(item => item.text === text)) return;
 
-    setItems(prev => [...prev, { id: Date.now().toString(), text, completed: false }]);
+    dispatch({ type: ACTION_MAP.ADD_ITEM, payload: { text } });
     inputRef.current.value = '';
     inputRef.current.focus();
-  }, [items]);
+  }, [items, dispatch]);
 
-  const removeItem = useCallback((id) => setItems(prev => prev.filter((item) => item.id !== id  )), []);
+  const handleOnRemoveItem = useCallback((id) => dispatch({ type: ACTION_MAP.REMOVE_ITEM, payload: { id } }), [dispatch]);
 
-  const toggleComplete = useCallback((id) => setItems(prev => prev.map((item) => item.id === id ? {...item, completed: !item.completed} : item)), []);
+  const handleOnToggleComplete = useCallback((id) => dispatch({ type: ACTION_MAP.TOGGLE_ITEM, payload: { id } }), [dispatch]);
 
-  const handleOnEdit = useCallback((id) => setEditItemId(id), [] )
+  const handleOnEdit = (id) => setEditItemId(id);
 
   const handleOnUpdate = useCallback((text) => {
     if (!editItemId) return false;
 
-    setItems(prev => prev.map((item) => item.id === editItemId ? {...item, text} : item ))
+    dispatch({ type: ACTION_MAP.UPDATE_ITEM, payload: { id: editItemId, text } })
 
     setEditItemId('');
-  }, [editItemId]);
+  }, [editItemId, dispatch]);
 
   const handleOnCancel = useCallback(() => setEditItemId(''), [])
 
@@ -80,8 +103,8 @@ function App() {
         onUpdate={handleOnUpdate}
         onCancel={handleOnCancel}
         items={filteredItems}
-        toggleComplete={toggleComplete}
-        removeItem={removeItem}
+        onToggleComplete={handleOnToggleComplete}
+        onRemoveItem={handleOnRemoveItem}
         onUpdateFilter={handleOnUpdateFilter}
       />
 
@@ -92,8 +115,8 @@ function App() {
 
 const TodoList = ({
   items,
-  toggleComplete,
-  removeItem,
+  onToggleComplete,
+  onRemoveItem,
   editItemId,
   onEdit,
   onUpdate,
@@ -121,8 +144,8 @@ const TodoList = ({
               <TodoItem
                 key={item.id}
                 item={item}
-                toggleComplete={toggleComplete}
-                removeItem={removeItem}
+                onToggleComplete={onToggleComplete}
+                onRemoveItem={onRemoveItem}
                 editItemId={editItemId}
                 onEdit={onEdit}
                 onUpdate={onUpdate}
@@ -138,7 +161,7 @@ const TodoList = ({
   )
 }
 
-const TodoItem = ({ item, toggleComplete, removeItem, editItemId, onEdit, onCancel, onUpdate }) => {
+const TodoItem = ({ item, onToggleComplete, onRemoveItem, editItemId, onEdit, onCancel, onUpdate }) => {
   const editInputRef = useRef(null);
   const handleOnSubmit = useCallback((e) => {
     e.preventDefault();
@@ -166,10 +189,10 @@ const TodoItem = ({ item, toggleComplete, removeItem, editItemId, onEdit, onCanc
         <>
           <span style={{ textDecoration: item.completed ? 'line-through' : 'none', flexGrow: 1 }}>{item.text}</span>
           <button onClick={handleOnEdit}>Edit</button>
-          <button onClick={() => toggleComplete(item.id)}>
+          <button onClick={() => onToggleComplete(item.id)}>
             {item.completed ? 'Undo' : 'Complete'}
           </button>
-          <button onClick={() => removeItem(item.id)}>Remove</button>
+          <button onClick={() => onRemoveItem(item.id)}>Remove</button>
         </>
       )}
     </li>
