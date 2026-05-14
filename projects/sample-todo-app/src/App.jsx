@@ -15,7 +15,7 @@ function App() {
       return [];
     }
   })
-  const [editIndex, setEditIndex] = useState(-1);
+  const [editItemId, setEditItemId] = useState('');
   const [filter, setFilter] = useState('');
 
   const handleOnSubmit = useCallback((event) => { 
@@ -26,26 +26,26 @@ function App() {
 
     if (items.some(item => item.text === text)) return;
 
-    setItems(prev => [...prev, { text, completed: false }]);
+    setItems(prev => [...prev, { id: Date.now().toString(), text, completed: false }]);
     inputRef.current.value = '';
     inputRef.current.focus();
   }, [items]);
 
-  const removeItem = useCallback((index) => setItems(prev => prev.filter((_, i) => i !== index  )), []);
+  const removeItem = useCallback((id) => setItems(prev => prev.filter((item) => item.id !== id  )), []);
 
-  const toggleComplete = useCallback((index) => setItems(prev => prev.map((item, i) => i === index ? {...item, completed: !item.completed} : item)), []);
+  const toggleComplete = useCallback((id) => setItems(prev => prev.map((item) => item.id === id ? {...item, completed: !item.completed} : item)), []);
 
-  const handleOnEdit = useCallback((index) => setEditIndex(index), [] )
+  const handleOnEdit = useCallback((id) => setEditItemId(id), [] )
 
   const handleOnUpdate = useCallback((text) => {
-    if (editIndex < 0) return false;
+    if (!editItemId) return false;
 
-    setItems(prev => prev.map((item, i) => i === editIndex ? {...item, text} : item ))
+    setItems(prev => prev.map((item) => item.id === editItemId ? {...item, text} : item ))
 
-    setEditIndex(-1);
-  }, [editIndex]);
+    setEditItemId('');
+  }, [editItemId]);
 
-  const handleOnCancel = useCallback(() => setEditIndex(-1), [])
+  const handleOnCancel = useCallback(() => setEditItemId(''), [])
 
   const handleOnUpdateFilter = useCallback((filter) => {
     if (filter !== 'all' && filter !== '' && filter !== 'pending' && filter !== 'completed') return false;
@@ -75,7 +75,7 @@ function App() {
       <h1>Todo List</h1>
 
       <TodoList
-        editIndex={editIndex}
+        editItemId={editItemId}
         onEdit={handleOnEdit}
         onUpdate={handleOnUpdate}
         onCancel={handleOnCancel}
@@ -94,7 +94,7 @@ const TodoList = ({
   items,
   toggleComplete,
   removeItem,
-  editIndex,
+  editItemId,
   onEdit,
   onUpdate,
   onCancel,
@@ -119,12 +119,11 @@ const TodoList = ({
           <ul style={{ listStyle: 'none', padding: 0, marginTop: '1rem', maxWidth: '400px' }}>
             {items.map((item, index) => (
               <TodoItem
-                key={index}
+                key={item.id}
                 item={item}
-                index={index}
                 toggleComplete={toggleComplete}
                 removeItem={removeItem}
-                editIndex={editIndex}
+                editItemId={editItemId}
                 onEdit={onEdit}
                 onUpdate={onUpdate}
                 onCancel={onCancel}
@@ -139,7 +138,7 @@ const TodoList = ({
   )
 }
 
-const TodoItem = ({ item, index, toggleComplete, removeItem, editIndex, onEdit, onCancel, onUpdate }) => {
+const TodoItem = ({ item, toggleComplete, removeItem, editItemId, onEdit, onCancel, onUpdate }) => {
   const editInputRef = useRef(null);
   const handleOnSubmit = useCallback((e) => {
     e.preventDefault();
@@ -152,11 +151,11 @@ const TodoItem = ({ item, index, toggleComplete, removeItem, editIndex, onEdit, 
     onUpdate(newText);
   }, [onUpdate, item.text]);
 
-  const handleOnEdit = useCallback(() => onEdit(index), [onEdit]);
+  const handleOnEdit = useCallback(() => onEdit(item.id), [onEdit]);
 
   return (
     <li style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem', width: '100%' }}>
-      {editIndex === index ? (
+      {editItemId === item.id ? (
         <form onSubmit={handleOnSubmit} style={{display: 'flex', gap: '0.5rem'}}>
           <input type="text" ref={editInputRef} defaultValue={item.text} />
 
@@ -167,10 +166,10 @@ const TodoItem = ({ item, index, toggleComplete, removeItem, editIndex, onEdit, 
         <>
           <span style={{ textDecoration: item.completed ? 'line-through' : 'none', flexGrow: 1 }}>{item.text}</span>
           <button onClick={handleOnEdit}>Edit</button>
-          <button onClick={() => toggleComplete(index)}>
+          <button onClick={() => toggleComplete(item.id)}>
             {item.completed ? 'Undo' : 'Complete'}
           </button>
-          <button onClick={() => removeItem(index)}>Remove</button>
+          <button onClick={() => removeItem(item.id)}>Remove</button>
         </>
       )}
     </li>
