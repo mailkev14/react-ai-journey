@@ -12,6 +12,8 @@ const ACTION_MAP = {
 function reducerFn (state, action) {
   switch (action.type) {
     case ACTION_MAP.ADD_ITEM:
+      if (state.find(item => item.text === action.payload.text)) return state;
+
       return [...state, { id: Date.now().toString(), completed: false, ...action.payload }];
     case ACTION_MAP.REMOVE_ITEM:
       return state.filter(prev => prev.id !== action?.payload?.id);
@@ -24,57 +26,20 @@ function reducerFn (state, action) {
   }
 }
 
-function App() {
-  const inputRef = useRef(null);
+function useTodos () {
+  const [filter, setFilter] = useState('');
+  const [editItemId, setEditItemId] = useState('');
   const [items, dispatch] = useReducer(reducerFn, [], () => {
     try {
       const localStorageItems = localStorage.getItem(TODO_ITEMS_KEY);
-
+  
       if (!localStorageItems) return [];
-
+  
       return JSON.parse(localStorageItems);
     } catch {
       return [];
     }
   });
-  
-  const [editItemId, setEditItemId] = useState('');
-  const [filter, setFilter] = useState('');
-
-  const handleOnSubmit = useCallback((event) => { 
-    const text = inputRef.current?.value?.trim();
-    event.preventDefault();
-
-    if (!text) return;
-
-    if (items.some(item => item.text === text)) return;
-
-    dispatch({ type: ACTION_MAP.ADD_ITEM, payload: { text } });
-    inputRef.current.value = '';
-    inputRef.current.focus();
-  }, [items, dispatch]);
-
-  const handleOnRemoveItem = useCallback((id) => dispatch({ type: ACTION_MAP.REMOVE_ITEM, payload: { id } }), [dispatch]);
-
-  const handleOnToggleComplete = useCallback((id) => dispatch({ type: ACTION_MAP.TOGGLE_ITEM, payload: { id } }), [dispatch]);
-
-  const handleOnEdit = (id) => setEditItemId(id);
-
-  const handleOnUpdate = useCallback((text) => {
-    if (!editItemId) return false;
-
-    dispatch({ type: ACTION_MAP.UPDATE_ITEM, payload: { id: editItemId, text } })
-
-    setEditItemId('');
-  }, [editItemId, dispatch]);
-
-  const handleOnCancel = useCallback(() => setEditItemId(''), [])
-
-  const handleOnUpdateFilter = useCallback((filter) => {
-    if (filter !== 'all' && filter !== '' && filter !== 'pending' && filter !== 'completed') return false;
-
-    setFilter(filter);
-  }, [])
 
   const filteredItems = useMemo(() => items.filter((item) => {
     switch (filter) {
@@ -93,19 +58,82 @@ function App() {
     localStorage.setItem(TODO_ITEMS_KEY, itemsToPersist);
   }, [items])
 
+  const onUpdateFilter = useCallback((filter) => {
+    if (filter !== 'all' && filter !== '' && filter !== 'pending' && filter !== 'completed') return false;
+
+    setFilter(filter);
+  }, [])
+
+  const onUpdateItemId = (id) => setEditItemId(id);
+  const onCancelUpdate = () => setEditItemId('');
+
+  const onAddItem = text => dispatch({ type: ACTION_MAP.ADD_ITEM, payload: { text } });
+  const onUpdateItem = (id, text) => {
+    dispatch({ type: ACTION_MAP.UPDATE_ITEM, payload: { id, text } });
+    setEditItemId('');
+  }
+  const onRemoveItem = (id) => dispatch({ type: ACTION_MAP.REMOVE_ITEM, payload: { id } });
+  const onToggleItem = (id) => dispatch({ type: ACTION_MAP.TOGGLE_ITEM, payload: { id } });
+
+  return {
+    items: filteredItems,
+    editItemId,
+    filter,
+
+    onAddItem,
+    onUpdateItem,
+    onRemoveItem,
+    onToggleItem,
+
+    onUpdateItemId,
+    onCancelUpdate,
+
+    onUpdateFilter,
+  }
+}
+
+function App() {
+  const inputRef = useRef(null);
+  
+  const {
+    items,
+    editItemId,
+
+    onAddItem,
+    onUpdateItem,
+    onRemoveItem,
+    onToggleItem,
+    
+    onUpdateItemId,
+    onCancelUpdate,
+
+    onUpdateFilter
+  } = useTodos();
+
+  const handleOnSubmit = useCallback((event) => { 
+    const text = inputRef.current?.value?.trim();
+    event.preventDefault();
+
+    if (!text) return;
+
+    onAddItem(text);
+    inputRef.current.value = '';
+    inputRef.current.focus();
+  }, [items, onAddItem]);
+
   return (
     <section>
       <h1>Todo List</h1>
 
       <TodoList
         editItemId={editItemId}
-        onEdit={handleOnEdit}
-        onUpdate={handleOnUpdate}
-        onCancel={handleOnCancel}
-        items={filteredItems}
-        onToggleComplete={handleOnToggleComplete}
-        onRemoveItem={handleOnRemoveItem}
-        onUpdateFilter={handleOnUpdateFilter}
+        onEdit={onUpdateItemId}
+        onUpdate={onUpdateItem}
+        onCancel={onCancelUpdate}
+        items={items}
+        onToggleComplete={onToggleItem}
+        onRemoveItem={onRemoveItem}
+        onUpdateFilter={onUpdateFilter}
       />
 
       <TodoForm inputRef={inputRef} onSubmit={handleOnSubmit} />
@@ -171,7 +199,7 @@ const TodoItem = ({ item, onToggleComplete, onRemoveItem, editItemId, onEdit, on
     if (!newText || newText === item.text) return false;
     
     editInputRef.current.value = ''
-    onUpdate(newText);
+    onUpdate(item.id, newText);
   }, [onUpdate, item.text]);
 
   const handleOnEdit = useCallback(() => onEdit(item.id), [onEdit]);
