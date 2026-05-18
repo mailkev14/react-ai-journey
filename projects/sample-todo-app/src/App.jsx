@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useReducer, useRef, useState } from 'react'
+import { useEffect, useMemo, useReducer, useState } from 'react'
 
 const TODO_ITEMS_KEY = 'todo-items'
 
@@ -184,15 +184,18 @@ const TodoList = ({
 }
 
 const TodoItem = ({ item, onToggleComplete, onRemoveItem, editItemId, onEdit, onCancel, onUpdate }) => {
-  const editInputRef = useRef(null);
+  const [editText, setEditText] = useState(item.text);
+  useEffect(() => {
+    setEditText(item.text);
+  }, [editItemId, item.text])
+
   const handleOnSubmit = (e) => {
     e.preventDefault();
 
-    const newText = editInputRef.current?.value?.trim();
+    const newText = editText.trim();
     
     if (!newText || newText === item.text) return false;
-    
-    editInputRef.current.value = ''
+
     onUpdate(item.id, newText);
   };
 
@@ -202,10 +205,10 @@ const TodoItem = ({ item, onToggleComplete, onRemoveItem, editItemId, onEdit, on
     <li style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem', width: '100%' }}>
       {editItemId === item.id ? (
         <form onSubmit={handleOnSubmit} style={{display: 'flex', gap: '0.5rem'}}>
-          <input type="text" ref={editInputRef} defaultValue={item.text} />
+          <input type="text" value={editText} onChange={e => setEditText(e.target.value)} />
 
           <button type="submit">Save</button>
-          <button onClick={onCancel}>Cancel</button>
+          <button onClick={onCancel} type="button">Cancel</button>
         </form>
       ) : (
         <>
