@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react'
+import { useEffect, useMemo, useReducer, useRef, useState } from 'react'
 
 const TODO_ITEMS_KEY = 'todo-items'
 
@@ -58,11 +58,11 @@ function useTodos () {
     localStorage.setItem(TODO_ITEMS_KEY, itemsToPersist);
   }, [items])
 
-  const onUpdateFilter = useCallback((filter) => {
+  const onUpdateFilter = (filter) => {
     if (filter !== 'all' && filter !== '' && filter !== 'pending' && filter !== 'completed') return false;
 
     setFilter(filter);
-  }, [])
+  };
 
   const onUpdateItemId = (id) => setEditItemId(id);
   const onCancelUpdate = () => setEditItemId('');
@@ -93,8 +93,6 @@ function useTodos () {
 }
 
 function App() {
-  const inputRef = useRef(null);
-  
   const {
     items,
     editItemId,
@@ -110,16 +108,12 @@ function App() {
     onUpdateFilter
   } = useTodos();
 
-  const handleOnSubmit = useCallback((event) => { 
-    const text = inputRef.current?.value?.trim();
-    event.preventDefault();
+  const handleOnSubmit = (text) => { 
+    const txt = text?.trim() ?? '';
+    if (!txt) return;
 
-    if (!text) return;
-
-    onAddItem(text);
-    inputRef.current.value = '';
-    inputRef.current.focus();
-  }, [items, onAddItem]);
+    onAddItem(txt);
+  };
 
   return (
     <section>
@@ -136,7 +130,7 @@ function App() {
         onUpdateFilter={onUpdateFilter}
       />
 
-      <TodoForm inputRef={inputRef} onSubmit={handleOnSubmit} />
+      <TodoForm onSubmit={handleOnSubmit} />
     </section>
   )
 }
@@ -168,7 +162,7 @@ const TodoList = ({
       {
         items?.length ? (
           <ul style={{ listStyle: 'none', padding: 0, marginTop: '1rem', maxWidth: '400px' }}>
-            {items.map((item, index) => (
+            {items.map(item => (
               <TodoItem
                 key={item.id}
                 item={item}
@@ -191,7 +185,7 @@ const TodoList = ({
 
 const TodoItem = ({ item, onToggleComplete, onRemoveItem, editItemId, onEdit, onCancel, onUpdate }) => {
   const editInputRef = useRef(null);
-  const handleOnSubmit = useCallback((e) => {
+  const handleOnSubmit = (e) => {
     e.preventDefault();
 
     const newText = editInputRef.current?.value?.trim();
@@ -200,9 +194,9 @@ const TodoItem = ({ item, onToggleComplete, onRemoveItem, editItemId, onEdit, on
     
     editInputRef.current.value = ''
     onUpdate(item.id, newText);
-  }, [onUpdate, item.text]);
+  };
 
-  const handleOnEdit = useCallback(() => onEdit(item.id), [onEdit]);
+  const handleOnEdit = () => onEdit(item.id);
 
   return (
     <li style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem', width: '100%' }}>
@@ -227,10 +221,19 @@ const TodoItem = ({ item, onToggleComplete, onRemoveItem, editItemId, onEdit, on
   )
 }
 
-const TodoForm = ({ inputRef, onSubmit }) => {
+const TodoForm = ({ onSubmit }) => {
+  const [text, setText] = useState('');
+  const handleOnSubmit = (e) => {
+    e.preventDefault();
+
+    onSubmit(text)
+
+    setText('')
+  };
+
   return (
-    <form onSubmit={onSubmit} style={{ display: 'flex', gap: '0.5rem' }}>
-      <input ref={inputRef} type="text" placeholder="Add a new todo" />
+    <form onSubmit={handleOnSubmit} style={{ display: 'flex', gap: '0.5rem' }}>
+      <input type="text" placeholder="Add a new todo" value={text} onChange={(e) => setText(e.target.value)} />
       <button type="submit">Add</button>
     </form>
   )
