@@ -186,8 +186,10 @@ const TodoList = ({
 const TodoItem = ({ item, onToggleComplete, onRemoveItem, editItemId, onEdit, onCancel, onUpdate }) => {
   const [editText, setEditText] = useState(item.text);
   useEffect(() => {
-    setEditText(item.text);
-  }, [editItemId, item.text])
+    if (editItemId === item.id) {
+      setEditText(item.text);
+    }
+  }, [editItemId, item.text, item.id])
 
   const handleOnSubmit = (e) => {
     e.preventDefault();
